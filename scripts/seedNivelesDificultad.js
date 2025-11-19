@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const NivelDificultad = require('./models/NivelDificultad');
+const NivelDificultad = require('../models/NivelDificultad');
 
 const nivelesIniciales = [
   {

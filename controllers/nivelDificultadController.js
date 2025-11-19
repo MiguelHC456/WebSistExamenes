@@ -3,8 +3,7 @@ const NivelDificultad = require('../models/NivelDificultad.js');
 // Obtener todos los niveles de dificultad
 exports.obtenerNivelesDificultad = async (req, res) => {
     try {
-        const niveles = await NivelDificultad.find({ activo: true })
-            .sort({ nivel: 1 });
+        const niveles = await NivelDificultad.find({}).sort({ nivel: 1 });
 
         res.json({
             success: true,
