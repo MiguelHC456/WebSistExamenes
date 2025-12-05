@@ -1,10 +1,11 @@
 // server.js
-// server.js
 require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const https = require("https");
+const fs = require("fs");
 
 const app = express();
 
@@ -34,22 +35,14 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 console.log(">>> Cargando rutas...");
 
 // AUTH
-const authRoutes = require("./routes/authRoutes");
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", require("./routes/authRoutes"));
 console.log(">>> authRoutes CARGADO");
 
 // USUARIOS
 console.log(">>> require.resolve usuarioRoutes:", require.resolve("./routes/usuarioRoutes"));
-const usuarioRoutes = require("./routes/usuarioRoutes");
-app.use("/api/usuarios", usuarioRoutes);
-// ===============================
-//       RUTA DE PRUEBA PUT
-// ===============================
-//app.put("/test-put/:id", (req, res) => {
-  //  res.json({ msg: "TEST PUT GLOBAL EXITOSO", id: req.params.id, body: req.body });
-//});
+app.use("/api/usuarios", require("./routes/usuarioRoutes"));
 
-// RESTO
+// RESTO DE RUTAS
 app.use("/api/categorias", require("./routes/categoriaRoutes"));
 app.use("/api/subcategorias", require("./routes/subcategoriaRoutes"));
 app.use("/api/rangos-edad", require("./routes/rangoEdadRoutes"));
@@ -65,14 +58,30 @@ app.get("/test-server", (req, res) => {
 });
 
 // ===============================
-//  MANEJO DE RUTAS INEXISTENTES
+//   MANEJO DE RUTAS INEXISTENTES
 // ===============================
 app.use("*", (req, res) => {
   res.status(404).json({ msg: "Ruta no encontrada" });
 });
 
 // ===============================
-//   CONEXIÓN A MONGO + SERVIDOR
+//     CONFIGURACIÓN HTTPS
+// ===============================
+let httpsOptions = {};
+try {
+  httpsOptions = {
+    key: fs.readFileSync("./certs/cert-key.pem"),
+    cert: fs.readFileSync("./certs/cert.pem"),
+    //ca: fs.readFileSync("./certs/ca.pem"),
+  };
+  console.log("🔐 Certificados HTTPS cargados correctamente.");
+} catch (err) {
+  console.warn("⚠ No se pudieron cargar certificados HTTPS:", err.message);
+  console.warn("⚠ HTTPS NO se habilitará. Solo se usará HTTP.");
+}
+
+// ===============================
+//   CONEXIÓN A MONGO + SERVIDORES
 // ===============================
 async function startServer() {
   try {
@@ -80,10 +89,21 @@ async function startServer() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("✔ Conectado a MongoDB Atlas");
 
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () =>
-      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`)
-    );
+    // Puertos
+    const HTTP_PORT = process.env.HTTP_PORT || 3001;
+    const HTTPS_PORT = process.env.HTTPS_PORT || 3000;
+
+    // Servidor HTTP
+    app.listen(HTTP_PORT, () => {
+      console.log(`🌐 Servidor HTTP corriendo en http://localhost:${HTTP_PORT}`);
+    });
+
+    // Servidor HTTPS (si existen certificados)
+    if (httpsOptions.key) {
+      https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
+        console.log(`🔐 Servidor HTTPS corriendo en https://localhost:${HTTPS_PORT}`);
+      });
+    }
 
   } catch (error) {
     console.error("❌ ERROR DE CONEXIÓN MONGO:", error);
@@ -92,3 +112,4 @@ async function startServer() {
 }
 
 startServer();
+
