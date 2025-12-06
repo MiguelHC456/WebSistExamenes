@@ -9,5 +9,5 @@ const options = {
 };
 
 https.createServer(options, app).listen(3443, () => {
-    console.log("🚀 HTTPS activado en https://localhost:3443");
+    console.log("HTTPS activado en https://localhost:3443");
 });
