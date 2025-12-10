@@ -1,0 +1,283 @@
+==========================================
+       WebSistExamenes - INSTALL.txt
+==========================================
+
+REQUISITOS
+----------
+1. Node.js 18+ (obligatorio)
+2. npm (incluido con Node)
+3. MongoDB Atlas o MongoDB local
+4. Archivo .env en la raíz del proyecto
+
+------------------------------------------
+PUERTOS UTILIZADOS EN EL PROYECTO
+------------------------------------------
+
+- Servidor HTTP (desarrollo):       http://localhost:3001
+- Servidor HTTPS interno:           https://localhost:3001
+- Servidor HTTP/2 (NGINX):          https://localhost   (puerto 443, sin especificar)
+
+------------------------------------------
+1. DESCARGA DEL PROYECTO
+------------------------------------------
+
+Clonar o descargar ZIP:
+    git clone https://github.com/MiguelHC456/WebSistExamenes.git
+    cd WebSistExamenes
+
+------------------------------------------
+2. INSTALAR DEPENDENCIAS
+------------------------------------------
+
+    npm install
+
+------------------------------------------
+3. CONFIGURAR VARIABLES DE ENTORNO (.env)
+------------------------------------------
+
+Contenido mínimo:
+
+    MONGODB_URI=mongodb+srv://marceloargandona_db_user:runaFehu,1001@cluster0.esconbo.mongodb.net/quiz_app?retryWrites=true&w=majority&appName=Cluster0
+    PORT=3001
+    JWT_SECRET=superclaveultrasecreta123
+    NODE_ENV=development
+
+------------------------------------------
+4. EJECUTAR LOS SERVIDORES
+------------------------------------------
+
+Servidor HTTP (puerto 3001):
+    node server.js
+
+Servidor HTTPS (puerto 3001, si está habilitado):
+    node server-https.js
+
+Servidor HTTP/2 (NGINX, puerto 443):
+    https://localhost
+
+------------------------------------------
+5. RESUMEN DE RUTAS HTTP/HTTPS
+------------------------------------------
+
+HTTP (3001):
+    http://localhost:3001/api/...
+
+HTTPS (3000):
+    https://localhost:3001/api/...
+
+HTTP/2 (443 – vía NGINX):
+    https://localhost/api/...
+
+------------------------------------------
+6. MANUAL DE USO DE LA API
+------------------------------------------
+
+ID usado: 69319326a7ddd215e62a0caa
+
+=====================
+     6.1 LOGIN
+=====================
+
+POST http://localhost:3001/api/auth/login
+Body:
+{
+  "correo": "admin@mail.com",
+  "password": "123456"
+}
+
+Salida:
+{
+  "msg": "Login exitoso",
+  "token": "<JWT_TOKEN>"
+}
+
+=============================
+  6.2 LISTAR USUARIOS (GET)
+=============================
+
+GET http://localhost:3001/api/usuarios
+
+Salida:
+200 OK
+[ Lista de usuarios ]
+
+=============================
+  6.3 CREAR USUARIO (ADMIN) solo ADMIN puede
+=============================
+
+POST http://localhost:3001/api/usuarios
+Body:
+{
+  "correo": "VladiProfe@test.com",
+  "nombre_completo": "Profesor Test",
+  "password": "123456",
+  "rol": "PROFESOR"
+}
+
+Salida:
+{
+  "msg": "Usuario creado correctamente",
+  "usuario": {
+    "id": "69319326a7ddd215e62a0caa",
+    "correo": "VladiProfe@test.com",
+    "nombre_completo": "Profesor Test",
+    "rol": "PROFESOR",
+    "activo": true
+  }
+}
+
+=========================================
+  6.4 ACTUALIZAR CONTRASEÑA DE USUARIO
+=========================================
+
+PUT http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa (ID)
+Body:
+{
+  "password": "123456"
+}
+
+Salida:
+{
+  "msg": "Usuario actualizado correctamente",
+  "usuario": { ... }
+}
+
+===================================
+  6.5 LOGIN CON OTRO USUARIO
+===================================
+
+POST http://localhost:3001/api/auth/login
+Body:
+{
+  "correo": "pruebaHash@mail.com",
+  "password": "123456"
+}
+
+Salida:
+{
+  "msg": "Login exitoso",
+  "token": "<JWT_TOKEN>"
+}
+
+=============================================================
+  6.6 DEBUG DE CONTRASEÑA (SOLO DESARROLLO / DEBUG) Sirve solo para debug, para verificar que el password existe y está correctamente hasheado.
+=============================================================
+
+GET http://localhost:3001/api/usuarios/debug-pass/6931abfbcd767aa5041a24b9 (ID)
+
+Salida:
+{
+  "_id": "6931abfbcd767aa5041a24b9",
+  "correo": "pruebaHash@mail.com",
+  "nombre_completo": "Hash Test",
+  "password": "$2b$10$I41rOovaiR8LqPqpwG0waOlnbzfxgAVTXl0nOdSR12a71o.fZX2EG"
+}
+
+======================================
+  6.7 OBTENER USUARIO POR ID (GET)
+======================================
+
+GET http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa (ID)
+
+Salida:
+{
+  "_id": "69319326a7ddd215e62a0caa",
+  "correo": "VladiProfe@test.com",
+  "nombre_completo": "Cerebrin",
+  ...
+}
+
+=====================================
+  6.8 DESACTIVAR USUARIO (DELETE)
+=====================================
+
+DELETE http://localhost:3001/api/usuarios/6931af31a7b973876630941f (ID)
+
+Salida:
+{
+  "msg": "Usuario desactivado"
+}
+
+======================================
+  6.9 REGISTRAR NUEVO USUARIO
+======================================
+
+POST http://localhost:3001/api/auth/register
+Body:
+{
+  "correo": "gunther@mail.com",
+  "nombre_completo": "Gunther",
+  "password": "123456",
+  "rol": "ESTUDIANTE"
+}
+
+Salida:
+{
+  "msg": "Usuario registrado correctamente",
+  "usuario": { ... }
+}
+
+=========================================
+  6.10 CREAR USUARIO ADMIN (SOLO UNA VEZ)
+=========================================
+
+POST http://localhost:3001/api/auth/create-admin
+
+Salida:
+{
+  "msg": "Admin creado",
+  "admin": { ... }
+}
+
+=========================================
+  6.11 REINICIAR PASSWORD ADMIN
+=========================================
+
+POST http://localhost:3001/api/auth/fix-pass
+
+Salida:
+{
+  "msg": "Password actualizado correctamente",
+  "password_hash": "$2b$10$8FIr9K3yaTZRRm7l/N5O5e84GYM24oSmk81MPjyDiIQ/9WJM4q102"
+}
+
+=========================================
+  6.12 CAMBIAR SOLO EL ROL
+=========================================
+
+PATCH http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa/rol (ID/rol)
+Body:
+{
+  "rol": "PROFESOR"
+}
+
+Salida:
+{
+  "msg": "Rol actualizado correctamente",
+  "usuario": { ... }
+}
+
+------------------------------------------
+7. NGINX – COMANDOS ÚTILES
+------------------------------------------
+
+sudo service nginx start  
+sudo service nginx stop  
+sudo service nginx restart  
+sudo service nginx status  
+sudo nginx -t  
+sudo service nginx reload  
+
+------------------------------------------
+8. EJEMPLO CURL USANDO HTTP/2
+------------------------------------------
+
+TOKEN="<JWT>"
+
+curl --http2 -k https://localhost/api/usuarios \
+  -H "Authorization: Bearer $TOKEN"
+
+------------------------------------------
+FIN DEL DOCUMENTO
+------------------------------------------
+

@@ -1,5 +1,4 @@
 // routes/usuarioRoutes.js
-console.log(">>> USANDO usuarioRoutes:", __filename);
 const express = require("express");
 const router = express.Router();
 
@@ -9,10 +8,10 @@ const auth = require("../middleware/auth");
 const { requireRole } = require("../middleware/roles");
 
 // =====================================================
-//  🔧 RUTAS ESPECÍFICAS (con texto)
+//   RUTAS ESPECÍFICAS (con texto)
 // =====================================================
 
-// 🔧 DEBUG PASS (Debe ir primero)
+//  DEBUG PASS (Debe ir primero)
 router.get("/debug-pass/:id", async (req, res) => {
     try {
         const usr = await Usuario.findById(req.params.id).select("+password");
@@ -104,7 +103,6 @@ router.get("/:id", auth, requireRole("ADMIN"), async (req, res) => {
 // =====================================================
 //  PUT /api/usuarios/:id    → actualizar usuario
 // =====================================================
-// ⚠️ MANTENER COMENTADO PARA LA PRUEBA DE 404 ⚠️
 router.put("/:id", auth, requireRole("ADMIN"), async (req, res) => {
     try {
         const { nombre_completo, correo, rol, activo } = req.body;
@@ -118,7 +116,8 @@ router.put("/:id", auth, requireRole("ADMIN"), async (req, res) => {
         // ❗ Nunca actualizar password aquí
         delete updates.password;
 
-        const usuario = await Usuario.findByIdAndUpdate(
+        const 
+        uario = await Usuario.findByIdAndUpdate(
             req.params.id,
             updates,
             { new: true }

@@ -11,9 +11,6 @@ const { registrarUsuario, login, renewToken } = require("../controllers/authCont
 const auth = require("../middleware/auth");
 const { requireRole } = require("../middleware/roles");
 
-// Debug log
-console.log(">>> CARGADO authRoutes DESDE:", __filename);
-
 // ==================
 //       TEST
 // ==================

@@ -1,3 +1,4 @@
+// server.js
 require("dotenv").config();
 
 const express = require("express");
@@ -24,14 +25,6 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Carga de rutas
-console.log(">>> Cargando rutas...");
-
-app.use("/api/auth", require("./routes/authRoutes"));
-console.log(">>> authRoutes CARGADO");
-
-console.log(">>> require.resolve usuarioRoutes:", require.resolve("./routes/usuarioRoutes"));
-app.use("/api/usuarios", require("./routes/usuarioRoutes"));
-
 app.use("/api/categorias", require("./routes/categoriaRoutes"));
 app.use("/api/subcategorias", require("./routes/subcategoriaRoutes"));
 app.use("/api/rangos-edad", require("./routes/rangoEdadRoutes"));
@@ -39,10 +32,8 @@ app.use("/api/preguntas", require("./routes/preguntaRoutes"));
 app.use("/api/niveles-dificultad", require("./routes/nivelDificultadRoutes"));
 app.use("/api/estados-pregunta", require("./routes/estadoPreguntaRoutes"));
 
-// Ruta de prueba
-app.get("/test-server", (req, res) => {
-  res.json({ ok: true, msg: "Servidor funcionando correctamente" });
-});
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/usuarios", require("./routes/usuarioRoutes")); 
 
 // Manejo de rutas inexistentes
 app.use("*", (req, res) => {
@@ -71,13 +62,13 @@ async function startServer() {
     const HTTP_PORT = 3001;
     const HTTPS_PORT = 3000;
 
-    // Servidor HTTP
-    app.listen(HTTP_PORT, () => {
+    // Servidor HTTP → accesible desde WSL y Nginx
+    app.listen(HTTP_PORT, "0.0.0.0", () => {
       console.log(`HTTP  → http://localhost:${HTTP_PORT}`);
     });
 
-    // Servidor HTTPS
-    https.createServer(sslOptions, app).listen(HTTPS_PORT, () => {
+    // Servidor HTTPS → accesible desde WSL y Nginx
+    https.createServer(sslOptions, app).listen(HTTPS_PORT, "0.0.0.0", () => {
       console.log(`HTTPS → https://localhost:${HTTPS_PORT}`);
     });
 
@@ -88,6 +79,7 @@ async function startServer() {
 }
 
 startServer();
+
 
 
 
