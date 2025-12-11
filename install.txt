@@ -6,16 +6,19 @@ REQUISITOS
 ----------
 1. Node.js 18+ (obligatorio)
 2. npm (incluido con Node)
-3. MongoDB Atlas o MongoDB local
+3. MongoDB Atlas (base de datos en la nube)
 4. Archivo .env en la raíz del proyecto
+5. NGINX (HTTP2 en producción)
 
 ------------------------------------------
 PUERTOS UTILIZADOS EN EL PROYECTO
 ------------------------------------------
 
-- Servidor HTTP (desarrollo):       http://localhost:3001
-- Servidor HTTPS interno:           https://localhost:3001
-- Servidor HTTP/2 (NGINX):          https://localhost   (puerto 443, sin especificar)
+- Servidor HTTP (Express):          http://localhost:3001
+- Servidor HTTPS (Express)          http://localhost:3000
+- HTTP/2 (NGINX):  https://localhost   (puerto 443)
+
+
 
 ------------------------------------------
 1. DESCARGA DEL PROYECTO
@@ -35,41 +38,127 @@ Clonar o descargar ZIP:
 3. CONFIGURAR VARIABLES DE ENTORNO (.env)
 ------------------------------------------
 
-Contenido mínimo:
+El archivo .env debe crearse en la raíz del proyecto.
+
+contenido:
+
+MONGODB_URI=mongodb+srv://marceloargandona_db_user:runaFehu,1001@cluster0.esconbo.mongodb.net/quiz_app?retryWrites=true&w=majority&appName=Cluster0
+PORT=3000
+JWT_SECRET=superclaveultrasecreta123
+NODE_ENV=development
+
+------------------------------------------
+3.1 EJEMPLO DE CONEXIÓN A MONGO ATLAS
+------------------------------------------
+
+Para obtener tu URL:
+
+1. Entra a https://cloud.mongodb.com
+2. Selecciona tu cluster → "Connect"
+3. Elige: "Connect your application"
+4. Copia el string que empieza con:
+
+   mongodb+srv://...
+
+Ejemplo REAL usado en este proyecto:
 
     MONGODB_URI=mongodb+srv://marceloargandona_db_user:runaFehu,1001@cluster0.esconbo.mongodb.net/quiz_app?retryWrites=true&w=majority&appName=Cluster0
+
+Otros valores requeridos:
+
     PORT=3001
     JWT_SECRET=superclaveultrasecreta123
     NODE_ENV=development
 
 ------------------------------------------
-4. EJECUTAR LOS SERVIDORES
+4. UBICACIÓN DE CERTIFICADOS HTTPS (*.pem)
 ------------------------------------------
 
-Servidor HTTP (puerto 3001):
+Los certificados usados por NGINX deben almacenarse en:
+
+    /certs/cert.pem
+    /certs/cert-key.pem
+    /certs/ca.pem   (opcional)
+
+Ejemplo de estructura del proyecto:
+
+    WebSistExamenes/
+    ├── certs/
+    │   ├── cert.pem
+    │   └── cert-key.pem
+    ├── server.js
+    ├── routes/
+    ├── models/
+    ├── middleware/
+    ├── package.json
+    └── .env
+
+------------------------------------------
+5. EJECUTAR EL SERVIDOR EXPRESS
+------------------------------------------
+
+Para iniciar backend:
+
     node server.js
 
-Servidor HTTPS (puerto 3001, si está habilitado):
-    node server-https.js
-
-Servidor HTTP/2 (NGINX, puerto 443):
-    https://localhost
-
-------------------------------------------
-5. RESUMEN DE RUTAS HTTP/HTTPS
-------------------------------------------
-
-HTTP (3001):
+Backend disponible en HTTP:
     http://localhost:3001/api/...
 
-HTTPS (3000):
-    https://localhost:3001/api/...
+------------------------------------------
+6. CONFIGURAR NGINX COMO REVERSE PROXY
+------------------------------------------
 
-HTTP/2 (443 – vía NGINX):
+Instalar NGINX en Ubuntu (WSL):
+
+    sudo apt install nginx
+
+Archivo a editar:
+
+    /etc/nginx/sites-available/default
+
+Contenido recomendado:
+
+    server {
+        listen 80;
+        listen [::]:80;
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+
+        server_name localhost;
+
+        ssl_certificate     /etc/nginx/certs/cert.pem;
+        ssl_certificate_key /etc/nginx/certs/cert-key.pem;
+
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+
+        location / {
+            proxy_pass http://winhost:3001;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-Proto https;
+        }
+    }
+
+Validar configuración:
+
+    sudo nginx -t
+
+Reiniciar NGINX:
+
+    sudo service nginx restart
+
+Acceso HTTPS final:
+
     https://localhost/api/...
 
 ------------------------------------------
-6. MANUAL DE USO DE LA API
+7. MANUAL DE USO DE LA API
 ------------------------------------------
 
 ID usado: 69319326a7ddd215e62a0caa
@@ -130,7 +219,7 @@ Salida:
   6.4 ACTUALIZAR CONTRASEÑA DE USUARIO
 =========================================
 
-PUT http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa (ID)
+PUT http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa
 Body:
 {
   "password": "123456"
@@ -160,10 +249,10 @@ Salida:
 }
 
 =============================================================
-  6.6 DEBUG DE CONTRASEÑA (SOLO DESARROLLO / DEBUG) Sirve solo para debug, para verificar que el password existe y está correctamente hasheado.
+  6.6 DEBUG DE CONTRASEÑA (SOLO DESARROLLO / DEBUG)
 =============================================================
 
-GET http://localhost:3001/api/usuarios/debug-pass/6931abfbcd767aa5041a24b9 (ID)
+GET http://localhost:3001/api/usuarios/debug-pass/6931abfbcd767aa5041a24b9
 
 Salida:
 {
@@ -177,7 +266,7 @@ Salida:
   6.7 OBTENER USUARIO POR ID (GET)
 ======================================
 
-GET http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa (ID)
+GET http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa
 
 Salida:
 {
@@ -191,7 +280,7 @@ Salida:
   6.8 DESACTIVAR USUARIO (DELETE)
 =====================================
 
-DELETE http://localhost:3001/api/usuarios/6931af31a7b973876630941f (ID)
+DELETE http://localhost:3001/api/usuarios/6931af31a7b973876630941f
 
 Salida:
 {
@@ -245,7 +334,7 @@ Salida:
   6.12 CAMBIAR SOLO EL ROL
 =========================================
 
-PATCH http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa/rol (ID/rol)
+PATCH http://localhost:3001/api/usuarios/69319326a7ddd215e62a0caa/rol
 Body:
 {
   "rol": "PROFESOR"
@@ -258,7 +347,7 @@ Salida:
 }
 
 ------------------------------------------
-7. NGINX – COMANDOS ÚTILES
+8. NGINX – COMANDOS ÚTILES
 ------------------------------------------
 
 sudo service nginx start  
@@ -269,7 +358,7 @@ sudo nginx -t
 sudo service nginx reload  
 
 ------------------------------------------
-8. EJEMPLO CURL USANDO HTTP/2
+9. EJEMPLO CURL USANDO HTTP/2
 ------------------------------------------
 
 TOKEN="<JWT>"
@@ -280,4 +369,5 @@ curl --http2 -k https://localhost/api/usuarios \
 ------------------------------------------
 FIN DEL DOCUMENTO
 ------------------------------------------
+
 
